@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Faturas</title>
+<style>
+:root{--bg:#e9eef4;--panel:#fff;--ink:#1d2733;--mute:#66758a;--line:#d9e0e8;--acc:#1f6f5c;--col:#dfe6ee;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12171d;--panel:#1b222b;--ink:#e8edf2;--mute:#93a1b3;--line:#2c3743;--acc:#4fb79d;--col:#18202a}}
+:root[data-theme="dark"]{--bg:#12171d;--panel:#1b222b;--ink:#e8edf2;--mute:#93a1b3;--line:#2c3743;--acc:#4fb79d;--col:#18202a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px}
+button.p{background:var(--acc);border-color:var(--acc);color:#fff}
+button.x{color:#b3261e}
+input,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+textarea{resize:vertical;min-height:56px}
+label{display:block;font-size:12px;color:var(--mute);margin:8px 0 3px}
+#board{padding:18px;max-width:1100px;margin:auto}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.top h1{margin:0;font-size:20px}.st{margin-left:auto;font-size:12px;color:var(--mute)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.col{background:var(--col);border-radius:10px;padding:10px;min-height:260px;border-top:4px solid var(--c)}
+.col.over{outline:2px dashed var(--acc)}
+.col h2{margin:2px 4px 2px;font-size:14px}.col .sum{margin:0 4px 10px;font-size:20px;font-weight:700}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:grab}
+.card b{display:block}.card .v{color:var(--acc);font-weight:700}.card small{color:var(--mute)}
+.card .act{display:flex;gap:6px;margin-top:8px}.card .act button{padding:3px 8px;font-size:12px}
+.empty{color:var(--mute);font-size:13px;text-align:center;padding:20px 0}
+#ed{position:fixed;inset:0;background:var(--bg);overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 16px;display:none;z-index:5}
+#ed.on{display:block}
+.edgrid{display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:18px;max-width:1300px;margin:auto}
+@media(max-width:900px){.edgrid{grid-template-columns:1fr}}
+.form{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;align-self:start}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.item{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;background:var(--bg)}
+.item .ln{display:flex;gap:8px;align-items:end}.item .ln>div{flex:1}
+.bar{display:flex;gap:8px;flex-wrap:wrap;max-width:1300px;margin:0 auto 14px}
+.sheet{background:#fff;color:#1d2733;max-width:794px;margin:auto;padding:44px 48px;border-radius:4px;box-shadow:0 2px 14px rgba(0,0,0,.12);min-height:650px;overflow-x:auto}
+.hd{display:flex;justify-content:space-between;gap:20px}.hd h1{margin:0;font-size:30px;color:#1f6f5c}.meta{text-align:right;font-size:13px}
+.cli{margin:26px 0 20px;font-size:13px}.cli h4{margin:0 0 4px;font-size:12px;color:#66758a}.cli .n{font-weight:700;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1f6f5c;color:#fff;text-align:left;padding:8px 10px}th.r,td.r{text-align:right}
+td{padding:9px 10px;border-bottom:1px solid #e3e8ee}
+.tot{margin:16px 0 0 auto;width:260px;background:#1f6f5c;color:#fff;border-radius:4px;padding:10px;display:flex;justify-content:space-between;font-weight:700}
+.notes{margin-top:24px;font-size:12.5px;white-space:pre-line}.notes h4{margin:0 0 4px;font-size:12px;color:#66758a}
+@media print{body{background:#fff}#board,.bar,.form{display:none!important}#ed{position:static;padding:0;background:none}.edgrid{display:block}.sheet{box-shadow:none;padding:0;min-height:0}th,.tot{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div id="board">
+<div class="top"><h1>Faturas</h1><button class="p" id="nova" type="button">+ Nova fatura</button><span class="st" id="st">Modo local</span></div>
+<div class="cols" id="cols"></div>
+</div>
+
+<div id="ed">
+<div class="bar">
+<button id="fechar" type="button">← Voltar ao quadro</button>
+<button class="p" id="mover" type="button"></button>
+<button id="print" type="button">Imprimir / PDF</button>
+<button class="x" id="del" type="button">Excluir</button>
+</div>
+<div class="edgrid">
+<div class="form">
+<label>Cliente</label><input id="cli">
+<label>CNPJ</label><input id="cnpj" placeholder="00.000.000/0000-00" inputmode="numeric">
+<div class="row"><div><label>Data</label><input id="data" type="date"></div><div><label>Vencimento</label><input id="ven" type="date"></div></div>
+<label>Itens</label><div id="itens"></div>
+<button class="p" id="add" type="button">+ Adicionar item</button>
+<label style="margin-top:12px">Observações</label><textarea id="obs"></textarea>
+</div>
+<div><div class="sheet" id="sheet"></div></div>
+</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyDk8FofZ516-sy_hdG7WB8yTfPUu91_Zvc",
+  authDomain:"faturas-f8cdc.firebaseapp.com",
+  projectId:"faturas-f8cdc",
+  storageBucket:"faturas-f8cdc.firebasestorage.app",
+  messagingSenderId:"696161254208",
+  appId:"1:696161254208:web:e6d169f7d827600ac8d8a5"
+  measurementId: "G-1RHRNYNG74"
+};
+</script>
+<script>
+const $=id=>document.getElementById(id);
+const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fd=s=>{if(!s)return'-';const[a,m,d]=s.split('-');return`${d}/${m}/${a}`};
+const total=f=>f.itens.reduce((s,i)=>s+i.q*i.p,0);
+const COLS=[{k:'preparo',n:'Em preparo',c:'#e0a526'},{k:'concluida',n:'Concluídas',c:'#1f6f5c'}];
+const me=Math.random().toString(36).slice(2);
+let F=new Map(),cur=null,coll=null,timers={};
+
+function board(){
+$('cols').innerHTML=COLS.map(c=>{
+const l=[...F.entries()].filter(([,f])=>f.status===c.k).sort((a,b)=>b[1].created-a[1].created);
+return`<div class="col" data-k="${c.k}" style="--c:${c.c}"><h2>${c.n} (${l.length})</h2><div class="sum">${brl(l.reduce((s,[,f])=>s+total(f),0))}</div>
+${l.map(([id,f])=>`<div class="card" draggable="true" data-id="${id}"><b>${esc(f.cli||'Sem cliente')}</b><span class="v">${brl(total(f))}</span><br><small>${fd(f.data)}${f.ven?' · vence '+fd(f.ven):''}</small>
+<div class="act"><button data-mv="${id}" type="button">${c.k==='preparo'?'Concluir →':'← Reabrir'}</button></div></div>`).join('')||'<div class="empty">Arraste uma fatura para cá</div>'}</div>`}).join('');
+}
+function persist(id,now){
+const f=F.get(id);if(!f||!coll)return;
+f.by=me;clearTimeout(timers[id]);
+const go=async()=>{try{await coll.doc(id).set({...f});$('st').textContent='Sincronizado'}catch(e){$('st').textContent='Erro ao salvar (confira as regras do Firestore)'}};
+if(now)go();else timers[id]=setTimeout(go,400);
+}
+function move(id,k){const f=F.get(id);if(!f||f.status===k)return;f.status=k;persist(id,true);board();if(cur===id)edHead()}
+function edHead(){const f=F.get(cur);$('mover').textContent=f.status==='preparo'?'Concluir fatura →':'← Reabrir fatura'}
+function sheet(){
+const f=F.get(cur);if(!f)return;
+$('sheet').innerHTML=`<div class="hd"><h1>FATURA</h1><div class="meta"><div>Data: ${fd(f.data)}</div><div>Vencimento: ${fd(f.ven)}</div></div></div>
+<div class="cli"><h4>Cliente</h4><div class="n">${esc(f.cli||'-')}</div>${f.cnpj?`<div>CNPJ: ${esc(f.cnpj)}</div>`:''}</div>
+<table><thead><tr><th>Descrição</th><th class="r">Qtd</th><th class="r">Preço unit.</th><th class="r">Total</th></tr></thead><tbody>
+${f.itens.map(i=>`<tr><td>${esc(i.d)}</td><td class="r">${i.q}</td><td class="r">${brl(i.p)}</td><td class="r">${brl(i.q*i.p)}</td></tr>`).join('')}</tbody></table>
+<div class="tot"><span>Total</span><span>${brl(total(f))}</span></div>${f.obs?`<div class="notes"><h4>Observações</h4>${esc(f.obs)}</div>`:''}`;
+}
+function list(){
+const f=F.get(cur);
+$('itens').innerHTML=f.itens.map((it,i)=>`<div class="item"><div class="ln"><div><label>Descrição</label><input data-i="${i}" data-k="d" value="${esc(it.d)}"></div><button class="x" data-del="${i}" type="button" aria-label="Remover item">✕</button></div>
+<div class="row"><div><label>Qtd</label><input type="number" min="0" step="any" data-i="${i}" data-k="q" value="${it.q}"></div><div><label>Preço unit. (R$)</label><input type="number" min="0" step="0.01" data-i="${i}" data-k="p" value="${it.p}"></div></div></div>`).join('');
+}
+function fill(){
+const f=F.get(cur);
+for(const k of ['cli','cnpj','data','ven','obs'])if(document.activeElement!==$(k))$(k).value=f[k]||'';
+if($('itens').children.length!==f.itens.length)list();
+else document.querySelectorAll('#itens input').forEach(e=>{if(e!==document.activeElement)e.value=f.itens[e.dataset.i][e.dataset.k]});
+}
+function open(id){cur=id;$('ed').classList.add('on');list();fill();sheet();edHead()}
+function close(){cur=null;$('ed').classList.remove('on');board()}
+function create(){
+const id=Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+F.set(id,{cli:'',cnpj:'',data:new Date().toISOString().slice(0,10),ven:'',obs:'',itens:[{d:'',q:1,p:0}],status:'preparo',created:Date.now()});
+persist(id,true);open(id);
+}
+function edit(){sheet();persist(cur)}
+
+document.addEventListener('input',e=>{
+const t=e.target,f=F.get(cur);if(!f)return;
+if(['cli','cnpj','data','ven','obs'].includes(t.id))f[t.id]=t.value;
+else if(t.dataset.k){const it=f.itens[t.dataset.i];it[t.dataset.k]=t.dataset.k==='d'?t.value:(parseFloat(t.value)||0)}
+else return;edit();
+});
+document.addEventListener('click',e=>{
+const t=e.target;
+if(t.dataset.del!==undefined){F.get(cur).itens.splice(+t.dataset.del,1);list();edit();return}
+if(t.dataset.mv){const f=F.get(t.dataset.mv);move(t.dataset.mv,f.status==='preparo'?'concluida':'preparo');return}
+const c=t.closest('.card');if(c&&!t.closest('button'))open(c.dataset.id);
+});
+$('nova').onclick=create;$('fechar').onclick=close;$('print').onclick=()=>window.print();
+$('add').onclick=()=>{F.get(cur).itens.push({d:'',q:1,p:0});list();edit()};
+$('mover').onclick=()=>{const f=F.get(cur);move(cur,f.status==='preparo'?'concluida':'preparo');close()};
+$('del').onclick=async()=>{if(!confirm('Excluir esta fatura?'))return;const id=cur;F.delete(id);close();try{if(coll)await coll.doc(id).delete()}catch(e){}};
+document.addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.closest('.card');if(c)e.dataTransfer.setData('text/plain',c.dataset.id)});
+document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.closest('.col');if(c){e.preventDefault();c.classList.add('over')}});
+document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.closest('.col');if(c)c.classList.remove('over')});
+document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest('.col');if(!c)return;e.preventDefault();const id=e.dataTransfer.getData('text/plain');move(id,c.dataset.k)});
+
+board();
+(()=>{
+try{
+if(!window.firebase||String(FIREBASE_CONFIG.apiKey).startsWith('COLE')){$('st').textContent='Firebase não configurado (modo local)';return}
+firebase.initializeApp(FIREBASE_CONFIG);
+coll=firebase.firestore().collection('faturas');$('st').textContent='Conectando...';
+const lim=setTimeout(()=>{$('st').textContent='Modo local (sem conexão)'},10000);
+coll.onSnapshot(snap=>{
+clearTimeout(lim);
+const ids=new Set();
+snap.docs.forEach(d=>{
+const x=d.data();ids.add(d.id);
+if(d.id===cur&&x.by===me)return;
+F.set(d.id,{cli:x.cli||'',cnpj:x.cnpj||'',data:x.data||'',ven:x.ven||'',obs:x.obs||'',itens:Array.isArray(x.itens)&&x.itens.length?x.itens:[{d:'',q:1,p:0}],status:x.status==='concluida'?'concluida':'preparo',created:x.created||0,by:x.by});
+});
+[...F.keys()].forEach(k=>{if(!ids.has(k)&&k!==cur)F.delete(k)});
+if(cur&&!F.has(cur))close();
+board();if(cur){fill();sheet();edHead()}
+$('st').textContent='Sincronizado';
+},()=>{clearTimeout(lim);$('st').textContent='Erro de conexão (confira as regras do Firestore)'});
+}catch(e){$('st').textContent='Erro na configuração do Firebase'}
+})();
+</script>
+</body>
+</html>
