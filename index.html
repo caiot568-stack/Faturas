@@ -53,6 +53,7 @@ td{padding:9px 10px;border-bottom:1px solid #e3e8ee}
 <body>
 <div id="board">
 <div class="top"><h1>Faturas</h1><button class="p" id="nova" type="button">+ Nova fatura</button><span class="st" id="st">Modo local</span></div>
+<input id="busca" placeholder="Pesquisar por nome..." style="max-width:260px">
 <div class="cols" id="cols"></div>
 </div>
 
@@ -99,11 +100,16 @@ const me=Math.random().toString(36).slice(2);
 let F=new Map(),cur=null,coll=null,timers={};
 
 function board(){
+let Q='',MORE={};
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function board(){
 $('cols').innerHTML=COLS.map(c=>{
-const l=[...F.entries()].filter(([,f])=>f.status===c.k).sort((a,b)=>b[1].created-a[1].created);
-return`<div class="col" data-k="${c.k}" style="--c:${c.c}"><h2>${c.n} (${l.length})</h2><div class="sum">${brl(l.reduce((s,[,f])=>s+total(f),0))}</div>
+const all=[...F.entries()].filter(([,f])=>f.status===c.k&&norm(f.cli).includes(norm(Q))).sort((a,b)=>b[1].created-a[1].created);
+const l=(Q||MORE[c.k])?all:all.slice(0,5);
+return`<div class="col" data-k="${c.k}" style="--c:${c.c}"><h2>${c.n} (${all.length})</h2><div class="sum">${brl(all.reduce((s,[,f])=>s+total(f),0))}</div>
 ${l.map(([id,f])=>`<div class="card" draggable="true" data-id="${id}"><b>${esc(f.cli||'Sem cliente')}</b><span class="v">${brl(total(f))}</span><br><small>${fd(f.data)}${f.ven?' · vence '+fd(f.ven):''}</small>
-<div class="act"><button data-mv="${id}" type="button">${c.k==='preparo'?'Concluir →':'← Reabrir'}</button></div></div>`).join('')||'<div class="empty">Arraste uma fatura para cá</div>'}</div>`}).join('');
+<div class="act"><button data-mv="${id}" type="button">${c.k==='preparo'?'Concluir →':'← Reabrir'}</button></div></div>`).join('')||`<div class="empty">${Q?'Nenhuma fatura encontrada':'Arraste uma fatura para cá'}</div>`}
+${all.length>5&&!Q?`<button data-more="${c.k}" type="button" style="width:100%">${MORE[c.k]?'Ver menos':'Ver mais ('+(all.length-5)+')'}</button>`:''}</div>`}).join('');
 }
 function persist(id,now){
 const f=F.get(id);if(!f||!coll)return;
@@ -150,10 +156,11 @@ else return;edit();
 document.addEventListener('click',e=>{
 const t=e.target;
 if(t.dataset.del!==undefined){F.get(cur).itens.splice(+t.dataset.del,1);list();edit();return}
+if(t.dataset.more){MORE[t.dataset.more]=!MORE[t.dataset.more];board();return}
 if(t.dataset.mv){const f=F.get(t.dataset.mv);move(t.dataset.mv,f.status==='preparo'?'concluida':'preparo');return}
 const c=t.closest('.card');if(c&&!t.closest('button'))open(c.dataset.id);
 });
-$('nova').onclick=create;$('fechar').onclick=close;$('print').onclick=()=>window.print();
+$('nova').onclick=create;$('fechar').onclick=close;$('print').onclick=()=>window.print();$('busca').oninput=e=>{Q=e.target.value;board()};
 $('add').onclick=()=>{F.get(cur).itens.push({d:'',q:1,p:0});list();edit()};
 $('mover').onclick=()=>{const f=F.get(cur);move(cur,f.status==='preparo'?'concluida':'preparo');close()};
 $('del').onclick=async()=>{if(!confirm('Excluir esta fatura?'))return;const id=cur;F.delete(id);close();try{if(coll)await coll.doc(id).delete()}catch(e){}};
