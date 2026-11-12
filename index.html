@@ -116,7 +116,7 @@ f.by=me;clearTimeout(timers[id]);
 const go=async()=>{try{await coll.doc(id).set({...f});$('st').textContent='Sincronizado'}catch(e){$('st').textContent='Erro ao salvar (confira as regras do Firestore)'}};
 if(now)go();else timers[id]=setTimeout(go,400);
 }
-function move(id,k){const f=F.get(id);if(!f||f.status===k)return;f.status=k;persist(id,true);board();if(cur===id)edHead()}
+function move(id,k){const f=F.get(id);if(!f||f.status===k)return;f.status=k;f.moved=Date.now();persist(id,true);board();if(cur===id)edHead()}
 function edHead(){const f=F.get(cur);$('mover').textContent=f.status==='preparo'?'Concluir fatura →':'← Reabrir fatura'}
 function sheet(){
 const f=F.get(cur);if(!f)return;
@@ -181,7 +181,7 @@ const ids=new Set();
 snap.docs.forEach(d=>{
 const x=d.data();ids.add(d.id);
 if(d.id===cur&&x.by===me)return;
-F.set(d.id,{cli:x.cli||'',cnpj:x.cnpj||'',data:x.data||'',ven:x.ven||'',obs:x.obs||'',itens:Array.isArray(x.itens)&&x.itens.length?x.itens:[{d:'',q:1,p:0}],status:x.status==='concluida'?'concluida':'preparo',created:x.created||0,by:x.by});
+F.set(d.id,{cli:x.cli||'',cnpj:x.cnpj||'',data:x.data||'',ven:x.ven||'',obs:x.obs||'',itens:Array.isArray(x.itens)&&x.itens.length?x.itens:[{d:'',q:1,p:0}],status:x.status==='concluida'?'concluida':'preparo',created:x.created||0,moved:x.moved||0,by:x.by});
 });
 [...F.keys()].forEach(k=>{if(!ids.has(k)&&k!==cur)F.delete(k)});
 if(cur&&!F.has(cur))close();
