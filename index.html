@@ -103,7 +103,7 @@ let Q='',MORE={};
 const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 function board(){
 $('cols').innerHTML=COLS.map(c=>{
-const all=[...F.entries()].filter(([,f])=>f.status===c.k&&norm(f.cli).includes(norm(Q))).sort((a,b)=>b[1].created-a[1].created);
+const all=[...F.entries()].filter(([,f])=>f.status===c.k&&norm(f.cli).includes(norm(Q))).sort((a,b)=>(b[1].moved||b[1].created)-(a[1].moved||a[1].created));
 const l=(Q||MORE[c.k])?all:all.slice(0,5);
 return`<div class="col" data-k="${c.k}" style="--c:${c.c}"><h2>${c.n} (${all.length})</h2><div class="sum">${brl(all.reduce((s,[,f])=>s+total(f),0))}</div>
 ${l.map(([id,f])=>`<div class="card" draggable="true" data-id="${id}"><b>${esc(f.cli||'Sem cliente')}</b><span class="v">${brl(total(f))}</span><br><small>${fd(f.data)}${f.ven?' · vence '+fd(f.ven):''}</small>
