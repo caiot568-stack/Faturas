@@ -1,4 +1,3 @@
-/* ===== 1. CONFIGURAÇÃO DO FIREBASE ===== */
 const FIREBASE_CONFIG={
   apiKey:"AIzaSyDk8FofZ516-sy_hdG7WB8yTfPUu91_Zvc",
   authDomain:"faturas-f8cdc.firebaseapp.com",
@@ -8,7 +7,6 @@ const FIREBASE_CONFIG={
   appId:"1:696161254208:web:e6d169f7d827600ac8d8a5"
 };
 
-/* ===== 2. FUNÇÕES AUXILIARES ===== */
 const $=id=>document.getElementById(id);
 const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -18,10 +16,8 @@ const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u03
 const COLS=[{k:'preparo',n:'Em preparo',c:'#e0a526'},{k:'concluida',n:'Concluídas',c:'#1f6f5c'}];
 const me=Math.random().toString(36).slice(2);
 
-/* ===== 3. ESTADO (dados em memória) ===== */
 let F=new Map(),P=new Map(),cur=null,coll=null,pcoll=null,timers={},Q='',MORE={};
 
-/* ===== 4. QUADRO DE FATURAS ===== */
 function board(){
 $('cols').innerHTML=COLS.map(c=>{
 const all=[...F.entries()].filter(([,f])=>f.status===c.k&&norm(f.cli).includes(norm(Q))).sort((a,b)=>(b[1].moved||b[1].created)-(a[1].moved||a[1].created));
@@ -39,7 +35,6 @@ if(now)go();else timers[id]=setTimeout(go,400);
 }
 function move(id,k){const f=F.get(id);if(!f||f.status===k)return;f.status=k;f.moved=Date.now();persist(id,true);board();if(cur===id)edHead()}
 
-/* ===== 5. EDIÇÃO DA FATURA ===== */
 function edHead(){const f=F.get(cur);$('mover').textContent=f.status==='preparo'?'Concluir fatura →':'← Reabrir fatura'}
 function sheet(){
 const f=F.get(cur);if(!f)return;
@@ -69,7 +64,6 @@ persist(id,true);open(id);
 }
 function edit(){sheet();persist(cur)}
 
-/* ===== 6. PRODUTOS (catálogo) ===== */
 function prodOptions(){
 $('dl-prod').innerHTML=[...P.values()].sort((a,b)=>a.nome.localeCompare(b.nome)).map(p=>`<option value="${esc(p.nome)}">${brl(p.preco)}</option>`).join('');
 }
@@ -88,14 +82,13 @@ P.set(id,p);if(pcoll)pcoll.doc(id).set(p).catch(()=>{});
 $('pnome').value='';$('ppreco').value='';prodOptions();prodList();$('pnome').focus();
 }
 
-/* ===== 7. EVENTOS ===== */
 document.addEventListener('input',e=>{
 const t=e.target,f=F.get(cur);if(!f)return;
 if(['cli','cnpj','data','ven','obs'].includes(t.id))f[t.id]=t.value;
 else if(t.dataset.k){
 const i=+t.dataset.i,it=f.itens[i],k=t.dataset.k;
 it[k]=k==='d'?t.value:(parseFloat(t.value)||0);
-if(k==='d'){ /* auto-preenchimento do preço */
+if(k==='d'){ 
 const m=[...P.entries()].find(([,p])=>norm(p.nome)===norm(t.value));
 if(m){if(it.pid!==m[0]){it.pid=m[0];it.p=m[1].preco;const pi=document.querySelector(`#itens input[data-i="${i}"][data-k="p"]`);if(pi)pi.value=m[1].preco}}
 else delete it.pid;
@@ -128,7 +121,6 @@ document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.clos
 document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.closest('.col');if(c)c.classList.remove('over')});
 document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest('.col');if(!c)return;e.preventDefault();const id=e.dataTransfer.getData('text/plain');move(id,c.dataset.k)});
 
-/* ===== 8. CONEXÃO COM O FIREBASE ===== */
 board();
 (()=>{
 try{
