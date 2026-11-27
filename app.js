@@ -25,11 +25,11 @@ let F=new Map(),P=new Map(),cur=null,coll=null,pcoll=null,timers={},Q='',MORE={}
 function board(){
 $('cols').innerHTML=COLS.map(c=>{
 const all=[...F.entries()].filter(([,f])=>f.status===c.k&&norm(f.cli).includes(norm(Q))).sort((a,b)=>(b[1].moved||b[1].created)-(a[1].moved||a[1].created));
-const l=(Q||MORE[c.k])?all:all.slice(0,5);
+const n=MORE[c.k]||5;const l=Q?all:all.slice(0,n);
 return`<div class="col" data-k="${c.k}" style="--c:${c.c}"><h2>${c.n} (${all.length})</h2><div class="sum">${brl(all.reduce((s,[,f])=>s+total(f),0))}</div>
 ${l.map(([id,f])=>`<div class="card" draggable="true" data-id="${id}"><b>${esc(f.cli||'Sem cliente')}</b><span class="v">${brl(total(f))}</span><br><small>${fd(f.data)}${f.ven?' · vence '+fd(f.ven):''}</small>
 <div class="act"><button data-mv="${id}" type="button">${c.k==='preparo'?'Concluir →':'← Reabrir'}</button></div></div>`).join('')||`<div class="empty">${Q?'Nenhuma fatura encontrada':'Arraste uma fatura para cá'}</div>`}
-${all.length>5&&!Q?`<button data-more="${c.k}" type="button" style="width:100%">${MORE[c.k]?'Ver menos':'Ver mais ('+(all.length-5)+')'}</button>`:''}</div>`}).join('');
+${!Q&&all.length>n?`<div style="display:flex;gap:8px"><button data-more="${c.k}" type="button" style="flex:1">Ver mais </button><button data-all="${c.k}" type="button" style="flex:1">Ver tudo (${all.length})</button></div>`:''}${!Q&&n>5&&all.length>5?`<button data-less="${c.k}" type="button" style="width:100%;margin-top:6px">Ver menos</button>`:''}</div>`}).join('');
 }
 function persist(id,now){
 const f=F.get(id);if(!f||!coll)return;
@@ -111,7 +111,9 @@ document.addEventListener('click',e=>{
 const t=e.target;
 if(t.dataset.del!==undefined){F.get(cur).itens.splice(+t.dataset.del,1);list();edit();return}
 if(t.dataset.pdel){P.delete(t.dataset.pdel);if(pcoll)pcoll.doc(t.dataset.pdel).delete().catch(()=>{});prodOptions();prodList();return}
-if(t.dataset.more){MORE[t.dataset.more]=!MORE[t.dataset.more];board();return}
+if(t.dataset.more){MORE[t.dataset.more]=(MORE[t.dataset.more]||5)+10;board();return}
+if(t.dataset.all){MORE[t.dataset.all]=Infinity;board();return}
+if(t.dataset.less){MORE[t.dataset.less]=5;board();return}
 if(t.dataset.mv){const f=F.get(t.dataset.mv);move(t.dataset.mv,f.status==='preparo'?'concluida':'preparo');return}
 const c=t.closest('.card');if(c&&!t.closest('button'))open(c.dataset.id);
 });
